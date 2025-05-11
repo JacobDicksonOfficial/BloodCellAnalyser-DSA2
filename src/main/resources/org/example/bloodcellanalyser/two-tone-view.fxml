@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="org.example.bloodcellanalyser.controllers.TwoToneController" spacing="10" alignment="CENTER">
+
+    <Label text="Two Tone Image Placeholder" />
+    <ImageView fx:id="imageView" fitWidth="800" fitHeight="600" preserveRatio="true" />
+    <Button text="Back" onAction="#backToMain" />
+
+</VBox>

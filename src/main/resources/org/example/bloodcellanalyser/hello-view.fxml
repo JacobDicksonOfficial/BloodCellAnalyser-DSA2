@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="org.example.bloodcellanalyser.controllers.MainController" spacing="10" alignment="CENTER">
+
+    <HBox spacing="10" alignment="CENTER">
+        <Button text="Open Image" onAction="#openImage" />
+        <Button text="Convert to Tri-Color" onAction="#convertToTricolor" />
+        <Button text="Analyze Cells" fx:id="analyzeBtn" onAction="#analyzeCells" />
+    </HBox>
+
+    <HBox spacing="20" alignment="CENTER">
+        <VBox spacing="5">
+            <Label text="Original Image" />
+            <ImageView fx:id="originalView" fitWidth="300" fitHeight="300" preserveRatio="true" />
+        </VBox>
+
+        <VBox spacing="5">
+            <Label text="Tri-Color Conversion" />
+            <ImageView fx:id="tricolorView" fitWidth="300" fitHeight="300" preserveRatio="true" />
+        </VBox>
+
+        <VBox spacing="5">
+            <Label text="Analyzed Output" />
+            <ImageView fx:id="resultView" fitWidth="300" fitHeight="300" preserveRatio="true" />
+        </VBox>
+    </HBox>
+
+    <HBox spacing="10" alignment="CENTER">
+        <Label text="Hue" /><Slider fx:id="hueS" min="0" max="180" value="20" />
+        <Label text="Sat" /><Slider fx:id="satS" min="0" max="1" value="0.2" />
+        <Label text="Bright" /><Slider fx:id="brightS" min="0" max="1" value="0.6" />
+        <Label text="Max Sat" /><Slider fx:id="maxSatS" min="0" max="1" value="1.0" />
+        <Label text="Max Bright" /><Slider fx:id="maxBrightS" min="0" max="1" value="1.0" />
+    </HBox>
+
+    <HBox spacing="10" alignment="CENTER">
+        <CheckBox fx:id="showLabels" text="Show Labels" />
+        <ListView fx:id="infoList" prefHeight="120" prefWidth="400" />
+    </HBox>
+</VBox>
