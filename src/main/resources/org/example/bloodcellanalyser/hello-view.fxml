@@ -37,7 +37,7 @@
     </HBox>
 
     <HBox spacing="10" alignment="CENTER">
-        <CheckBox fx:id="showLabels" text="Show Labels" />
+        <ToggleButton fx:id="toggleLabels" text="Toggle Labels" onAction="#toggleLabelsAction" />
         <ListView fx:id="infoList" prefHeight="120" prefWidth="400" />
     </HBox>
 </VBox>

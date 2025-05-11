@@ -10,7 +10,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.example.bloodcellanalyser.HelloApplication;
 import org.example.bloodcellanalyser.MyUnionFind;
 import org.example.bloodcellanalyser.models.BloodCellDetails;
 
@@ -25,7 +24,7 @@ public class MainController implements Initializable {
     @FXML private ImageView originalView, tricolorView, resultView;
     @FXML private Slider hueS, satS, brightS, maxSatS, maxBrightS;
     @FXML private ListView<String> infoList;
-    @FXML private CheckBox showLabels;
+    @FXML private ToggleButton toggleLabels;
     @FXML private Button analyzeBtn;
 
     private Image originalImage;
@@ -34,6 +33,8 @@ public class MainController implements Initializable {
     private int[] cellArray;
     private MyUnionFind uf;
     private HashMap<Integer, BloodCellDetails> cells = new HashMap<>();
+    private WritableImage lastResultImage;
+    private boolean lastAnalyzed = false;
 
     public void setWidth(int width) { this.width = width; }
     public void setHeight(int height) { this.height = height; }
@@ -59,6 +60,7 @@ public class MainController implements Initializable {
             infoList.getItems().clear();
             resultView.setImage(null);
             tricolorView.setImage(null);
+            lastAnalyzed = false;
         }
     }
 
@@ -168,7 +170,7 @@ public class MainController implements Initializable {
             gc.setLineWidth(2);
             gc.strokeRect(minX, minY, maxX - minX + 1, maxY - minY + 1);
 
-            if (showLabels.isSelected()) {
+            if (toggleLabels.isSelected()) {
                 gc.setFont(Font.font(16));
                 gc.setFill(Color.BLACK);
                 gc.fillText(String.valueOf(cell.getLabel()), minX, minY);
@@ -177,11 +179,48 @@ public class MainController implements Initializable {
 
         canvas.snapshot(null, result);
         resultView.setImage(result);
+        lastResultImage = result;
+        lastAnalyzed = true;
 
         infoList.getItems().clear();
         infoList.getItems().add("Estimated Red Cells: " + redCount);
         infoList.getItems().add("Estimated White Cells: " + whiteCount);
         infoList.getItems().add("Total Clusters: " + cells.size());
+    }
+
+    @FXML
+    public void toggleLabelsAction() {
+        if (!lastAnalyzed || cells.isEmpty()) return;
+
+        WritableImage result = new WritableImage(width, height);
+        Canvas canvas = new Canvas(width, height);
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+        gc.drawImage(originalImage, 0, 0);
+
+        for (BloodCellDetails cell : cells.values()) {
+            int minX = width, maxX = 0, minY = height, maxY = 0;
+            for (int idx : cell.getIndices()) {
+                int x = idx % width;
+                int y = idx / width;
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+
+            gc.setStroke(cell.getColor());
+            gc.setLineWidth(2);
+            gc.strokeRect(minX, minY, maxX - minX + 1, maxY - minY + 1);
+
+            if (toggleLabels.isSelected()) {
+                gc.setFont(Font.font(16));
+                gc.setFill(Color.BLACK);
+                gc.fillText(String.valueOf(cell.getLabel()), minX, minY);
+            }
+        }
+
+        canvas.snapshot(null, result);
+        resultView.setImage(result);
     }
 
     public Image getOriginalImage() {
