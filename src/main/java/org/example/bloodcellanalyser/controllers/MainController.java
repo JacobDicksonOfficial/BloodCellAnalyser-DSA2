@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.example.bloodcellanalyser.MyUnionFind;
@@ -16,6 +17,7 @@ import org.example.bloodcellanalyser.models.BloodCellDetails;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
+
 
 public class MainController implements Initializable {
     public static MainController mainController;
@@ -26,6 +28,11 @@ public class MainController implements Initializable {
     @FXML private ListView<String> infoList;
     @FXML private ToggleButton toggleLabels;
     @FXML private Button analyzeBtn;
+
+    @FXML private TableView<?> resultsTable;
+    @FXML private Text dropImageHint;
+    @FXML private TextField hueValue, satValue, brightValue;
+
 
     private Image originalImage;
     private PixelReader pixelReader;
@@ -222,6 +229,36 @@ public class MainController implements Initializable {
         canvas.snapshot(null, result);
         resultView.setImage(result);
     }
+
+    @FXML
+    public void handleResetAll() {
+        // Clear images
+        originalView.setImage(null);
+        tricolorView.setImage(null);
+        resultView.setImage(null);
+
+        // Clear outputs
+        infoList.getItems().clear();
+        if (resultsTable != null) resultsTable.getItems().clear();
+
+        // Show hint again
+        if (dropImageHint != null) dropImageHint.setVisible(true);
+
+        // Reset sliders
+        hueS.setValue(20);
+        satS.setValue(0.2);
+        brightS.setValue(0.4);
+
+        // Reset fields
+        if (hueValue != null) hueValue.setText("20");
+        if (satValue != null) satValue.setText("0.2");
+        if (brightValue != null) brightValue.setText("0.4");
+
+        // Clear any internal data
+        cells.clear();
+    }
+
+
 
     public Image getOriginalImage() {
         return originalImage;

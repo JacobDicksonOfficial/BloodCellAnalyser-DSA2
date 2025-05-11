@@ -12,7 +12,7 @@ public class HelloApplication extends Application {
 
     public static Scene loadScene(String file) throws Exception {
         FXMLLoader loader = new FXMLLoader(HelloApplication.class.getResource(file));
-        return new Scene(loader.load(), 1000, 700);
+        return new Scene(loader.load(), 1400, 850);
     }
 
     @Override
