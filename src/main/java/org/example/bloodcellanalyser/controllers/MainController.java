@@ -92,7 +92,6 @@ public class MainController implements Initializable {
 
     @FXML
     public void analyzeCells() {
-        // Union adjacent red/purple pixels
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 int idx = y * width + x;
@@ -105,7 +104,6 @@ public class MainController implements Initializable {
             }
         }
 
-        // Group pixels into clusters
         Map<Integer, List<Integer>> clusters = new HashMap<>();
         for (int i = 0; i < cellArray.length; i++) {
             if (cellArray[i] < 0) {
@@ -113,6 +111,14 @@ public class MainController implements Initializable {
                 clusters.computeIfAbsent(root, k -> new ArrayList<>()).add(i);
             }
         }
+
+        List<Map.Entry<Integer, List<Integer>>> sortedClusters = new ArrayList<>(clusters.entrySet());
+        sortedClusters.sort(Comparator.comparingInt(entry -> {
+            List<Integer> indices = entry.getValue();
+            int minY = indices.stream().mapToInt(i -> i / width).min().orElse(0);
+            int minX = indices.stream().mapToInt(i -> i % width).min().orElse(0);
+            return minY * width + minX;
+        }));
 
         WritableImage result = new WritableImage(width, height);
         Canvas canvas = new Canvas(width, height);
@@ -122,11 +128,9 @@ public class MainController implements Initializable {
         int redCount = 0, whiteCount = 0, label = 1;
         cells.clear();
 
-        for (Map.Entry<Integer, List<Integer>> entry : clusters.entrySet()) {
+        for (Map.Entry<Integer, List<Integer>> entry : sortedClusters) {
             List<Integer> indices = entry.getValue();
             int size = indices.size();
-
-            // 🔒 Skip tiny noise clusters
             if (size < 20) continue;
 
             int minX = width, maxX = 0, minY = height, maxY = 0;
@@ -152,7 +156,7 @@ public class MainController implements Initializable {
                 type = "red";
             } else {
                 rectColor = Color.BLUE;
-                redCount += Math.round(size / 50.0); // Cluster estimation
+                redCount += Math.round(size / 50.0);
                 type = "red-cluster";
             }
 
@@ -166,10 +170,9 @@ public class MainController implements Initializable {
 
             if (showLabels.isSelected()) {
                 gc.setFont(Font.font(16));
-                gc.setFill(Color.BLACK); // Just the label in black
+                gc.setFill(Color.BLACK);
                 gc.fillText(String.valueOf(cell.getLabel()), minX, minY);
             }
-
         }
 
         canvas.snapshot(null, result);
