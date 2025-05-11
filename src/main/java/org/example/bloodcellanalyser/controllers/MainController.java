@@ -1,5 +1,7 @@
 package org.example.bloodcellanalyser.controllers;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
@@ -13,26 +15,28 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.example.bloodcellanalyser.MyUnionFind;
 import org.example.bloodcellanalyser.models.BloodCellDetails;
+import org.example.bloodcellanalyser.models.CellSummary;
 
 import java.io.File;
 import java.net.URL;
 import java.util.*;
-
 
 public class MainController implements Initializable {
     public static MainController mainController;
     private FileChooser fileChooser = new FileChooser();
 
     @FXML private ImageView originalView, tricolorView, resultView;
-    @FXML private Slider hueS, satS, brightS, maxSatS, maxBrightS;
+    @FXML private Slider hueS, satS, brightS;
+    @FXML private TextField hueValue, satValue, brightValue;
     @FXML private ListView<String> infoList;
     @FXML private ToggleButton toggleLabels;
-    @FXML private Button analyzeBtn;
-
-    @FXML private TableView<?> resultsTable;
+    @FXML private ProgressIndicator progressIndicator;
     @FXML private Text dropImageHint;
-    @FXML private TextField hueValue, satValue, brightValue;
 
+    @FXML private TableView<CellSummary> resultsTable;
+    @FXML private TableColumn<CellSummary, String> cellTypeColumn;
+    @FXML private TableColumn<CellSummary, Integer> countColumn;
+    @FXML private TableColumn<CellSummary, String> percentageColumn;
 
     private Image originalImage;
     private PixelReader pixelReader;
@@ -40,7 +44,6 @@ public class MainController implements Initializable {
     private int[] cellArray;
     private MyUnionFind uf;
     private HashMap<Integer, BloodCellDetails> cells = new HashMap<>();
-    private WritableImage lastResultImage;
     private boolean lastAnalyzed = false;
 
     public void setWidth(int width) { this.width = width; }
@@ -51,6 +54,10 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         mainController = this;
+
+        cellTypeColumn.setCellValueFactory(data -> data.getValue().cellTypeProperty());
+        countColumn.setCellValueFactory(data -> data.getValue().countProperty().asObject());
+        percentageColumn.setCellValueFactory(data -> data.getValue().percentageProperty());
     }
 
     @FXML
@@ -59,6 +66,7 @@ public class MainController implements Initializable {
         if (file != null) {
             originalImage = new Image(file.toURI().toString());
             originalView.setImage(originalImage);
+            dropImageHint.setVisible(false);
             pixelReader = originalImage.getPixelReader();
             width = (int) originalImage.getWidth();
             height = (int) originalImage.getHeight();
@@ -121,14 +129,6 @@ public class MainController implements Initializable {
             }
         }
 
-        List<Map.Entry<Integer, List<Integer>>> sortedClusters = new ArrayList<>(clusters.entrySet());
-        sortedClusters.sort(Comparator.comparingInt(entry -> {
-            List<Integer> indices = entry.getValue();
-            int minY = indices.stream().mapToInt(i -> i / width).min().orElse(0);
-            int minX = indices.stream().mapToInt(i -> i % width).min().orElse(0);
-            return minY * width + minX;
-        }));
-
         WritableImage result = new WritableImage(width, height);
         Canvas canvas = new Canvas(width, height);
         GraphicsContext gc = canvas.getGraphicsContext2D();
@@ -137,7 +137,7 @@ public class MainController implements Initializable {
         int redCount = 0, whiteCount = 0, label = 1;
         cells.clear();
 
-        for (Map.Entry<Integer, List<Integer>> entry : sortedClusters) {
+        for (Map.Entry<Integer, List<Integer>> entry : clusters.entrySet()) {
             List<Integer> indices = entry.getValue();
             int size = indices.size();
             if (size < 20) continue;
@@ -186,13 +186,23 @@ public class MainController implements Initializable {
 
         canvas.snapshot(null, result);
         resultView.setImage(result);
-        lastResultImage = result;
         lastAnalyzed = true;
 
         infoList.getItems().clear();
         infoList.getItems().add("Estimated Red Cells: " + redCount);
         infoList.getItems().add("Estimated White Cells: " + whiteCount);
         infoList.getItems().add("Total Clusters: " + cells.size());
+
+        ObservableList<CellSummary> summaryList = FXCollections.observableArrayList();
+        int total = redCount + whiteCount;
+        if (total > 0) {
+            summaryList.add(new CellSummary("Red Cells", redCount, String.format("%.1f%%", 100.0 * redCount / total)));
+            summaryList.add(new CellSummary("White Cells", whiteCount, String.format("%.1f%%", 100.0 * whiteCount / total)));
+        } else {
+            summaryList.add(new CellSummary("Red Cells", 0, "0%"));
+            summaryList.add(new CellSummary("White Cells", 0, "0%"));
+        }
+        resultsTable.setItems(summaryList);
     }
 
     @FXML
@@ -232,33 +242,24 @@ public class MainController implements Initializable {
 
     @FXML
     public void handleResetAll() {
-        // Clear images
         originalView.setImage(null);
         tricolorView.setImage(null);
         resultView.setImage(null);
-
-        // Clear outputs
         infoList.getItems().clear();
-        if (resultsTable != null) resultsTable.getItems().clear();
+        resultsTable.getItems().clear();
+        dropImageHint.setVisible(true);
 
-        // Show hint again
-        if (dropImageHint != null) dropImageHint.setVisible(true);
-
-        // Reset sliders
         hueS.setValue(20);
+        hueValue.setText("20");
+
         satS.setValue(0.2);
+        satValue.setText("0.2");
+
         brightS.setValue(0.4);
+        brightValue.setText("0.4");
 
-        // Reset fields
-        if (hueValue != null) hueValue.setText("20");
-        if (satValue != null) satValue.setText("0.2");
-        if (brightValue != null) brightValue.setText("0.4");
-
-        // Clear any internal data
         cells.clear();
     }
-
-
 
     public Image getOriginalImage() {
         return originalImage;
